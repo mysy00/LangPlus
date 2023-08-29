@@ -1,3 +1,12 @@
+#if defined _inc_LangPlus
+#undef _inc_LangPlus
+#endif
+
+#if defined _LangPlus_included
+#endinput
+#endif
+#define _LangPlus_included
+
 #if !defined PP_SYNTAX_FOR_POOL
     #define PP_SYNTAX_FOR_POOL
 #endif
