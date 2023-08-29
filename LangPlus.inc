@@ -80,7 +80,7 @@ public OnPlayerConnect(playerid) {
     #endif
 }
 
-static Language:_InitLanguage(const langName[]) {
+static stock Language:_InitLanguage(const langName[]) {
     if (pool_size(s_LanguagePool) == MAX_LANGUAGES) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "too many languages",
@@ -122,7 +122,7 @@ static bool:LangPlus_IsValidLanguage(Language:id) {
     return pool_has(s_LanguagePool, _:id);
 }
 
-static _LangPlus_AddLanguageEntry(const Language:languageid, const key[], const val[]) {
+static stock _LangPlus_AddLanguageEntry(const Language:languageid, const key[], const val[]) {
     if (!LangPlus_IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id or key/value",
@@ -158,7 +158,9 @@ static _LangPlus_AddLanguageEntry(const Language:languageid, const key[], const 
     return true;
 }
 
-stock Language:LangPlus_LoadLanguage(const langName[]) {
+// This one shouldn't be a stock.
+// Importing the library and not using it is pointless
+Language:LangPlus_LoadLanguage(const langName[]) {
     new Language:languageid = _InitLanguage(langName);
     if (languageid == INVALID_LANGUAGE_ID) {
         #if(defined _logger_included)
