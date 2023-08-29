@@ -1,0 +1,20 @@
+{
+	"user": "mysy00",
+	"repo": "LangPlus",
+	"entry": "test.pwn",
+	"output": "gamemodes/test.amx",
+	"dependencies": [
+		"openmultiplayer/omp-stdlib",
+		"pawn-lang/samp-stdlib@open.mp",
+		"pawn-lang/pawn-stdlib@open.mp",
+		"Y-Less/sscanf",
+		"IS4Code/PawnPlus"
+	],
+	"dev_dependencies": [
+		"Y-Less/samp-plugin-crashdetect:v4.22",
+		"Southclaws/samp-logger"
+	],
+	"runtime": {
+		"version": "openmp"
+	}
+}
