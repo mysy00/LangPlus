@@ -4,7 +4,7 @@
 #define VOID_TAGS
 #define STRONG_TAGS
 #include <open.mp>
-#include "language-plus.inc"
+#include "LangPlus.inc"
 
 main() {}
 
@@ -56,6 +56,8 @@ public OnPlayerConnect(playerid) {
     LangPlus_SendClientMessage(playerid, -1, "TEST_SCM", 2137);
     LangPlus_SetPlayerLanguageByName(playerid, "Ukrainian");
     LangPlus_SendClientMessage(playerid, -1, "TEST_SCM", 2137);
+
+    LangPlus_SendClientMessageToAll(-1, "TEST_SCM", 2137);
 
     return 1;
 }

@@ -5,6 +5,7 @@
 #include <open.mp>
 #include <sscanf2>
 #include <PawnPlus>
+#tryinclude <YSI_Data\y_iterate>
 #tryinclude <logger>
 
 #if !defined MAX_LANGUAGES
@@ -368,6 +369,26 @@ stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_
                LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(playerid), msg),
                getarg(3)
            );
+}
+
+stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
+    #if defined _Y_ITERATE_LOCAL_VERSION || defined _FOREACH_LOCAL_VERSION
+    foreach (new i : Player) {
+    #else
+    for (new i = 0; i != MAX_PLAYERS; i++) {
+        if (!IsPlayerConnected(i)) {
+            continue;
+        }
+    #endif
+        SendClientMessage(
+            i,
+            color,
+            LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(i), msg),
+            getarg(2)
+        );
+    }
+
+    return true;
 }
 
 #if defined _ALS_OnGameModeInit
