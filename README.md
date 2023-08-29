@@ -47,7 +47,7 @@ scriptfiles/languages/Ukrainian.ini:
 TEST_SCM=Привіт Люба LangPlus_SendClientMessage: %d
 ```
 
-## Configuration:
+## Configuration
 Define your options before including the library.
 
 ```pawn
