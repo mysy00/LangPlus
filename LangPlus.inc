@@ -80,7 +80,7 @@ public OnPlayerConnect(playerid) {
     #endif
 }
 
-static stock Language:_InitLanguage(const langName[]) {
+static stock Language:_InitLanguage(const string:langName[]) {
     if (pool_size(s_LanguagePool) == MAX_LANGUAGES) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "too many languages",
@@ -122,7 +122,7 @@ static bool:LangPlus_IsValidLanguage(Language:id) {
     return pool_has(s_LanguagePool, _:id);
 }
 
-static stock _LangPlus_AddLanguageEntry(const Language:languageid, const key[], const val[]) {
+static stock _LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
     if (!LangPlus_IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id or key/value",
@@ -160,7 +160,7 @@ static stock _LangPlus_AddLanguageEntry(const Language:languageid, const key[], 
 
 // This one shouldn't be a stock.
 // Importing the library and not using it is pointless
-Language:LangPlus_LoadLanguage(const langName[]) {
+Language:LangPlus_LoadLanguage(const string:langName[]) {
     new Language:languageid = _InitLanguage(langName);
     if (languageid == INVALID_LANGUAGE_ID) {
         #if(defined _logger_included)
@@ -260,7 +260,7 @@ stock LangPlus_GetLanguageList(string:languages[][]) {
     return pool_size(s_LanguagePool);
 }
 
-stock bool:LangPlus_GetLanguageName(Language:languageid, output[] = "", len = sizeof(output)) {
+stock bool:LangPlus_GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output)) {
     if (!LangPlus_IsValidLanguage(languageid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id",
@@ -275,7 +275,7 @@ stock bool:LangPlus_GetLanguageName(Language:languageid, output[] = "", len = si
     return output[0] != '\0';
 }
 
-stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], output[], len = sizeof(output)) {
+stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], string:output[], len = sizeof(output)) {
     if (!LangPlus_IsValidLanguage(languageid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id",
@@ -302,6 +302,9 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], o
         #endif
 
         if (_:languageid == 0) {
+            Logger_Log("language key does not exist",
+                       Logger_I("languageid", _:languageid),
+                       Logger_S("key", key));
             return false;
         }
 
@@ -361,7 +364,7 @@ stock bool:LangPlus_SetPlayerLanguageByName(playerid, const string:language[]) {
     return LangPlus_SetPlayerLanguage(playerid, LangPlus_GetLanguageId(language));
 }
 
-stock Language:LangPlus_GetPlayerLanguageName(playerid, output[] = "", len = sizeof(output)) {
+stock Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", len = sizeof(output)) {
     if (!IsPlayerConnected(playerid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid player id",

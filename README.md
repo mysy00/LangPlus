@@ -90,7 +90,7 @@ Define your options before including the library.
 ## API
 ```pawn
 // Load a language
-Language:LangPlus_LoadLanguage(const langName[])
+Language:LangPlus_LoadLanguage(const string:langName[])
 // Example:
 new Language:g_LangEnglish = LangPlus_LoadLanguage("English");
 
@@ -109,10 +109,10 @@ for (new i = 0; i < langCount; i++) {
 }
 
 // Get name of a language by its ID
-bool:LangPlus_GetLanguageName(Language:languageid, output[] = "", len = sizeof(output))
+bool:LangPlus_GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output))
 
 // Get translated string from a language
-bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], output[], len = sizeof(output))
+bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], string:output[], len = sizeof(output))
 
 // Same as above but return it
 LangPlus_ReturnLanguageString(Language:languageid, const string:key[])
@@ -124,7 +124,7 @@ bool:LangPlus_SetPlayerLanguage(playerid, Language:languageid)
 bool:Language:LangPlus_GetPlayerLanguage(playerid)
 
 // Returns player's language and gets the name of the language
-Language:LangPlus_GetPlayerLanguageName(playerid, output[] = "", len = sizeof(output))
+Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", len = sizeof(output))
 
 // Send a message to everyone in their language
 bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_MP_TAGS:...)
