@@ -7,6 +7,7 @@
 		"openmultiplayer/omp-stdlib",
 		"pawn-lang/samp-stdlib@open.mp",
 		"pawn-lang/pawn-stdlib@open.mp",
+		"pawn-lang/YSI-Includes@5.x",
 		"Y-Less/sscanf",
 		"IS4Code/PawnPlus"
 	],
