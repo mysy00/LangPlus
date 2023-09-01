@@ -384,7 +384,7 @@ stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_
                playerid,
                color,
                LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(playerid), msg),
-               getarg(3)
+               ___(3)
            );
 }
 
@@ -401,7 +401,7 @@ stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TA
             i,
             color,
             LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(i), msg),
-            getarg(2)
+            ___(2)
         );
     }
 
