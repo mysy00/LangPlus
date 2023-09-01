@@ -16,6 +16,7 @@
 #include <PawnPlus>
 #include <YSI_Coding\y_va>
 #include <YSI_Data\y_iterate>
+#include <strlib>
 #tryinclude <logger>
 
 #if !defined MAX_LANGUAGES
@@ -191,7 +192,8 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
     }
 
     new key[MAX_LANGUAGE_KEY_LEN],
-        val[MAX_LANGUAGE_ENTRY_LENGTH];
+        val[MAX_LANGUAGE_ENTRY_LENGTH],
+        valFormatted[MAX_LANGUAGE_ENTRY_LENGTH];
 
     while (fread(fHandler, line)) {
         lineLength = strlen(line);
@@ -221,7 +223,9 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
             return INVALID_LANGUAGE_ID;
         }
 
-        _LangPlus_AddLanguageEntry(languageid, key, val);
+        strfromliteral(valFormatted, val);
+
+        _LangPlus_AddLanguageEntry(languageid, key, valFormatted);
 
         lineNumber++;
     }
@@ -303,7 +307,7 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
         #endif
 
         if (_:languageid == 0) {
-            Logger_Log("language key does not exist",
+            Logger_Log("language key does not exist in the default language",
                        Logger_I("languageid", _:languageid),
                        Logger_S("key", key));
             return false;

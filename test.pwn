@@ -24,6 +24,14 @@ public OnGameModeInit() {
     }
 
     print("#########################################");
+    print("## TEST: Escape sequences ##");
+    print("#########################################");
+    new escapedString[MAX_LANGUAGE_ENTRY_LENGTH + 1];
+    LangPlus_GetLanguageString(g_LangEnglish, "DIALOGMENU", escapedString);
+    print("Option 1\nOption 2\nOption 3");
+    print(escapedString);
+
+    print("#########################################");
     print("## TEST: LangPlus_ReturnLanguageString ##");
     print("#########################################");
 
