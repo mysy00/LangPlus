@@ -89,6 +89,12 @@ Define your options before including the library.
 
 ## API
 ```pawn
+// Define a replacement for a string found in the file
+bool:LangPlus_SetStringReplacement(const string:key[], const string:value[])
+// Example:
+LangPlus_SetStringReplacement("{CE_WHITE}", "{FFFFFF}");
+// NOTE: You have to use it before you load a language
+
 // Load a language
 Language:LangPlus_LoadLanguage(const string:langName[])
 // Example:

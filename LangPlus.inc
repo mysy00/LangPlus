@@ -11,6 +11,10 @@
     #define PP_SYNTAX_FOR_POOL
 #endif
 
+#if !defined PP_SYNTAX_FOR_MAP
+    #define PP_SYNTAX_FOR_MAP
+#endif
+
 #include <open.mp>
 #include <sscanf2>
 #include <PawnPlus>
@@ -52,13 +56,22 @@
     #define MAX_FILE_NAME (64)
 #endif
 
+#if !defined MAX_REPLACEMENT_KEY_LEN
+    #define MAX_REPLACEMENT_KEY_LEN (16)
+#endif
+
+#if !defined MAX_REPLACEMENT_VALUE_LEN
+    #define MAX_REPLACEMENT_VALUE_LEN (16)
+#endif
+
 #define INVALID_LANGUAGE_ID (Language:-1)
 
 // A macro for easier migration from SS/language
 #define @L(%0,%1) LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(%0), %1)
 
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
-       Pool:s_LanguagePool;
+       Pool:s_LanguagePool,
+       Map:s_StringReplacements;
 
 static Language:s_PlayerLanguage[MAX_PLAYERS];
 
@@ -225,6 +238,18 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
 
         strfromliteral(valFormatted, val);
 
+        if (map_valid(s_StringReplacements)) {
+            for_map(it : s_StringReplacements) {
+                new replacementKey[MAX_REPLACEMENT_KEY_LEN + 1],
+                    replacementValue[MAX_REPLACEMENT_VALUE_LEN + 1];
+
+                iter_get_key_str(it, replacementKey);
+                iter_get_value_str(it, replacementValue);
+
+                strreplace(valFormatted, replacementKey, replacementValue);
+            }
+        }
+
         _LangPlus_AddLanguageEntry(languageid, key, valFormatted);
 
         lineNumber++;
@@ -233,6 +258,53 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
     fclose(fHandler);
 
     return languageid;
+}
+
+stock bool:LangPlus_SetStringReplacement(const string:key[], const string:value[]) {
+    if (key[0] == EOS || value[0] == EOS) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "invalid key/value",
+                   Logger_S("key", key),
+                   Logger_S("value", value));
+        #endif
+
+        return false;
+    }
+
+    if (strlen(key) > MAX_REPLACEMENT_KEY_LEN) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "key is too long",
+                   Logger_S("key", key));
+        #endif
+
+        return false;
+    }
+
+    if (strlen(value) > MAX_REPLACEMENT_VALUE_LEN) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "value is too long",
+                   Logger_S("value", value));
+        #endif
+
+        return false;
+    }
+
+    if (!map_valid(s_StringReplacements)) {
+        s_StringReplacements = map_new();
+    }
+
+    if (map_has_str_key(s_StringReplacements, key)) {
+        #if(defined _logger_included)
+        Logger_Log("replacement key already exists",
+                   Logger_S("key", key));
+        #endif
+
+        return false;
+    }
+
+    map_str_add_str(s_StringReplacements, key, value);
+
+    return true;
 }
 
 stock Language:LangPlus_GetLanguageId(const string:language[]) {

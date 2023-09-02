@@ -12,6 +12,8 @@ new Language:g_LangEnglish;
 new Language:g_LangUkrainian;
 
 public OnGameModeInit() {
+    LangPlus_SetStringReplacement("{CE_WHITE}", "{FFFFFF}");
+
     g_LangEnglish = LangPlus_LoadLanguage("English");
     g_LangUkrainian = LangPlus_LoadLanguage("Ukrainian");
 
@@ -22,6 +24,12 @@ public OnGameModeInit() {
     for (new i = 0; i < langCount; i++) {
         printf("%s", langList[i]);
     }
+
+    print("#########################################");
+    print("## TEST: Replacements ##");
+    print("#########################################");
+
+    printf(LangPlus_ReturnLanguageString(g_LangEnglish, "TEST_REPLACEMENT"));
 
     print("#########################################");
     print("## TEST: Escape sequences ##");
