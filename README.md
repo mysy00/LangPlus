@@ -85,6 +85,14 @@ Define your options before including the library.
 #if !defined MAX_FILE_NAME
     #define MAX_FILE_NAME (64)
 #endif
+
+#if !defined MAX_REPLACEMENT_KEY_LEN
+    #define MAX_REPLACEMENT_KEY_LEN (16)
+#endif
+
+#if !defined MAX_REPLACEMENT_VALUE_LEN
+    #define MAX_REPLACEMENT_VALUE_LEN (16)
+#endif
 ```
 
 ## API
