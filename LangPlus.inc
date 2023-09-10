@@ -66,6 +66,19 @@
 
 #define INVALID_LANGUAGE_ID (Language:-1)
 
+#if defined SS_LANG_COMPATIBILITY
+    #define DefineLanguageReplacement LangPlus_SetStringReplacement
+    #define InitLanguage LangPlus_LoadLanguage
+    #define AddLanguageEntry LangPlus_AddLanguageEntry
+    #define GetLanguageString LangPlus_GetLanguageString
+    #define GetLanguageList LangPlus_GetLanguageList
+    #define GetLanguageID LangPlus_GetLanguageId
+    #define GetLanguageName LangPlus_GetLanguageName
+    #define GetPlayerLanguage LangPlus_GetPlayerLanguage
+    #define SetPlayerLanguage LangPlus_SetPlayerLanguage
+    #define @L(%0,%1) GetLanguageString(GetPlayerLanguage(%0), %1)
+#endif
+
 // A macro for easier migration from SS/language
 #define @L(%0,%1) LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(%0), %1)
 
@@ -137,7 +150,7 @@ static bool:LangPlus_IsValidLanguage(Language:id) {
     return pool_has(s_LanguagePool, _:id);
 }
 
-static stock _LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
+LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
     if (!LangPlus_IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id or key/value",
@@ -250,7 +263,7 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
             }
         }
 
-        _LangPlus_AddLanguageEntry(languageid, key, valFormatted);
+        LangPlus_AddLanguageEntry(languageid, key, valFormatted);
 
         lineNumber++;
     }
