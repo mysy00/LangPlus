@@ -18,9 +18,9 @@
 #include <open.mp>
 #include <sscanf2>
 #include <PawnPlus>
-#include <YSI_Coding\y_va>
-#include <YSI_Data\y_iterate>
 #include <strlib>
+#tryinclude <YSI_Coding\y_va>
+#tryinclude <YSI_Data\y_iterate>
 #tryinclude <logger>
 
 #if !defined MAX_LANGUAGES
@@ -469,6 +469,7 @@ stock Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", le
     return s_PlayerLanguage[playerid];
 }
 
+#if defined _INC_y_va
 stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_MP_TAGS:...) {
     return SendClientMessage(
                playerid,
@@ -481,6 +482,12 @@ stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_
 stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
     #if defined _Y_ITERATE_LOCAL_VERSION || defined _FOREACH_LOCAL_VERSION
     foreach (new i : Player) {
+    #else
+    for (new i = 0; i < MAX_PLAYERS; i++) {
+        if (!IsPlayerConnected(i)) {
+            continue;
+        }
+    #endif
         SendClientMessage(
             i,
             color,
@@ -491,6 +498,7 @@ stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TA
 
     return true;
 }
+#endif
 
 #if defined _ALS_OnGameModeInit
     #undef OnGameModeInit
