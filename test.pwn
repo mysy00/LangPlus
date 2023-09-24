@@ -3,6 +3,9 @@
 
 #define VOID_TAGS
 #define STRONG_TAGS
+
+// #define LANGPLUS_REPLACE_NATIVES
+
 #include <open.mp>
 #include "LangPlus.inc"
 
@@ -12,6 +15,8 @@ new Language:g_LangEnglish;
 new Language:g_LangUkrainian;
 
 public OnGameModeInit() {
+    Logger_ToggleDebug("langplus", true);
+
     LangPlus_SetStringReplacement("{CE_WHITE}", "{FFFFFF}");
 
     g_LangEnglish = LangPlus_LoadLanguage("English");
@@ -74,6 +79,29 @@ public OnPlayerConnect(playerid) {
     LangPlus_SendClientMessage(playerid, -1, "TEST_SCM", 2137);
 
     LangPlus_SendClientMessageToAll(-1, "TEST_SCM", 2137);
+
+    // Hooked natives
+    #if defined LANGPLUS_REPLACE_NATIVES
+    LangPlus_SetPlayerLanguage(playerid, g_LangEnglish);
+    SendClientMessage(playerid, -1, "[TEST] Hooked natives in English - SendClientMessage");
+    SendClientMessage(playerid, -1, "regular message");
+    SendClientMessage(playerid, -1, "TEST_SCM", 2137);
+    SendClientMessage(playerid, -1, "TEST_SCM", 2137);
+    SendClientMessage(playerid, -1, "[TEST] Hooked natives in English - SendClientMessageToAll");
+    SendClientMessageToAll(-1, "regular message", 2137);
+    SendClientMessageToAll(-1, "TEST_SCM", 2137);
+    SendClientMessageToAll(-1, "TEST_SCM", 2137);
+
+    LangPlus_SetPlayerLanguage(playerid, g_LangUkrainian);
+    SendClientMessage(playerid, -1, "[TEST] Hooked natives in Ukrainian - SendClientMessage");
+    SendClientMessage(playerid, -1, "regular message");
+    SendClientMessage(playerid, -1, "TEST_SCM", 2137);
+    SendClientMessage(playerid, -1, "TEST_SCM", 2137);
+    SendClientMessage(playerid, -1, "[TEST] Hooked natives in Ukrainian - SendClientMessageToAll");
+    SendClientMessageToAll(-1, "regular message", 2137);
+    SendClientMessageToAll(-1, "TEST_SCM", 2137);
+    SendClientMessageToAll(-1, "TEST_SCM", 2137);
+    #endif
 
     return 1;
 }

@@ -381,6 +381,16 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
                    Logger_I("languageid", _:languageid));
         #endif
 
+        if (languageid != Language:0) {
+            return LangPlus_GetLanguageString(Language:0, key, output, len);
+        }
+
+        #if(defined _logger_included)
+        Logger_Log("language key does not exist in the default language",
+                   Logger_I("languageid", _:languageid),
+                   Logger_S("key", key));
+        #endif
+
         return false;
     }
 
@@ -391,14 +401,17 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
                    Logger_S("key", key));
         #endif
 
-        if (_:languageid == 0) {
-            Logger_Log("language key does not exist in the default language",
-                       Logger_I("languageid", _:languageid),
-                       Logger_S("key", key));
-            return false;
+        if (languageid != Language:0) {
+            return LangPlus_GetLanguageString(Language:0, key, output, len);
         }
 
-        languageid = Language:0;
+        #if(defined _logger_included)
+        Logger_Log("language key does not exist in the default language",
+                   Logger_I("languageid", _:languageid),
+                   Logger_S("key", key));
+        #endif
+
+        return false;
     }
 
     map_str_get_str(s_LanguageMap[languageid], key, output, len);
@@ -470,6 +483,42 @@ stock Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", le
 }
 
 #if defined _INC_y_va
+#if defined LANGPLUS_REPLACE_NATIVES
+LangPlus_SendClientMessage(playerid, colour, const format[], OPEN_MP_TAGS:...) {
+    new Language:playerLanguage;
+    playerLanguage = LangPlus_GetPlayerLanguage(playerid);
+
+    if (playerLanguage == INVALID_LANGUAGE_ID) {
+        return SendClientMessage(playerid, colour, format, ___(3));
+    }
+
+    new langMessage[144];
+
+    new bool:ret;
+    ret = LangPlus_GetLanguageString(playerLanguage, format, langMessage);
+
+    if (ret) {
+        SendClientMessage(playerid, colour, langMessage, ___(3));
+        return true;
+    }
+
+    SendClientMessage(playerid, colour, format, ___(3));
+    return true;
+}
+
+bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
+    foreach (new i : Player) {
+        SendClientMessage(
+            i,
+            color,
+            msg,
+            ___(2)
+        );
+    }
+
+    return true;
+}
+#else
 stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_MP_TAGS:...) {
     return SendClientMessage(
                playerid,
@@ -480,14 +529,7 @@ stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_
 }
 
 stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
-    #if defined _Y_ITERATE_LOCAL_VERSION || defined _FOREACH_LOCAL_VERSION
     foreach (new i : Player) {
-    #else
-    for (new i = 0; i < MAX_PLAYERS; i++) {
-        if (!IsPlayerConnected(i)) {
-            continue;
-        }
-    #endif
         SendClientMessage(
             i,
             color,
@@ -499,6 +541,9 @@ stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TA
     return true;
 }
 #endif
+#endif
+
+// ALS
 
 #if defined _ALS_OnGameModeInit
     #undef OnGameModeInit
@@ -518,4 +563,15 @@ forward LangPlus_OnGameModeInit();
 #define OnPlayerConnect LangPlus_OnPlayerConnect
 #if defined LangPlus_OnPlayerConnect
 forward LangPlus_OnPlayerConnect(playerid);
+#endif
+
+#if defined LANGPLUS_REPLACE_NATIVES
+    #if defined _ALS_SendClientMessage
+        #undef SendClientMessage
+    #else
+        #define _ALS_SendClientMessage
+    #endif
+    #define SendClientMessage LangPlus_SendClientMessage
+
+    #define SendClientMessageToAll LangPlus_SendClientMessageToAll
 #endif

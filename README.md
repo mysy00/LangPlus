@@ -93,6 +93,9 @@ Define your options before including the library.
 #if !defined MAX_REPLACEMENT_VALUE_LEN
     #define MAX_REPLACEMENT_VALUE_LEN (16)
 #endif
+
+// Replace the default SendClientMessage and SendClientMessageToAll natives to use the language system by default 
+#define LANGPLUS_REPLACE_NATIVES
 ```
 
 ## API
