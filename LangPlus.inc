@@ -79,9 +79,6 @@
     #define @L(%0,%1) GetLanguageString(GetPlayerLanguage(%0), %1)
 #endif
 
-// A macro for easier migration from SS/language
-#define @L(%0,%1) LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(%0), %1)
-
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
        Pool:s_LanguagePool,
        Map:s_StringReplacements;
