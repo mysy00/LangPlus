@@ -331,7 +331,9 @@ stock Language:LangPlus_GetLanguageId(const string:language[]) {
 
 stock LangPlus_GetLanguageList(string:languages[][]) {
     if (pool_size(s_LanguagePool) == 0) {
+        #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
+        #endif
         return 0;
     }
 
