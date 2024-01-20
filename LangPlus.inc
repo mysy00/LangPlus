@@ -76,7 +76,7 @@
     #define GetLanguageName LangPlus_GetLanguageName
     #define GetPlayerLanguage LangPlus_GetPlayerLanguage
     #define SetPlayerLanguage LangPlus_SetPlayerLanguage
-    #define @L(%0,%1) GetLanguageString(GetPlayerLanguage(%0), %1)
+    #define @L(%0,%1) LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(%0), %1)
 #endif
 
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
