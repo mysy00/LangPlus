@@ -105,7 +105,7 @@ public OnPlayerConnect(playerid) {
     #endif
 }
 
-static stock Language:_InitLanguage(const string:langName[]) {
+static Language:_InitLanguage(const string:langName[]) {
     if (pool_size(s_LanguagePool) == MAX_LANGUAGES) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "too many languages",
@@ -144,6 +144,15 @@ static bool:LangPlus_IsValidLanguage(Language:id) {
         return false;
     }
 
+    if (!map_valid(s_LanguageMap[id])) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "language hasn't been initialized ",
+                   Logger_I("languageid", _:id));
+        #endif
+
+        return false;
+    }
+
     return pool_has(s_LanguagePool, _:id);
 }
 
@@ -164,10 +173,6 @@ LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const s
                    Logger_I("languageid", _:languageid));
         #endif
         return false;
-    }
-
-    if (!map_valid(s_LanguageMap[languageid])) {
-        s_LanguageMap[languageid] = map_new();
     }
 
     if (map_has_str_key(s_LanguageMap[languageid], key)) {
@@ -195,6 +200,8 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
 
         return INVALID_LANGUAGE_ID;
     }
+
+    s_LanguageMap[languageid] = map_new();
 
     new fileName[MAX_FILE_NAME],
         File:fHandler,
@@ -374,25 +381,6 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
         return false;
     }
 
-    if (!map_valid(s_LanguageMap[languageid])) {
-        #if(defined _logger_included)
-        Logger_Dbg("langplus", "language map is invalid",
-                   Logger_I("languageid", _:languageid));
-        #endif
-
-        if (languageid != Language:0) {
-            return LangPlus_GetLanguageString(Language:0, key, output, len);
-        }
-
-        #if(defined _logger_included)
-        Logger_Log("language key does not exist in the default language",
-                   Logger_I("languageid", _:languageid),
-                   Logger_S("key", key));
-        #endif
-
-        return false;
-    }
-
     if (!map_has_str_key(s_LanguageMap[languageid], key)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "language key does not exist",
@@ -410,7 +398,9 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
                    Logger_S("key", key));
         #endif
 
-        return false;
+        strcpy(output, key, MAX_LANGUAGE_ENTRY_LENGTH);
+
+        return true;
     }
 
     map_str_get_str(s_LanguageMap[languageid], key, output, len);
