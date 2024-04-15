@@ -147,6 +147,23 @@ Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", len = si
 bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_MP_TAGS:...)
 ```
 
+## Integrations
+Helper functions to use this library in pair with other useful includes.
+### samp-dyn-dialog-pages
+```pawn
+void:LangPlus_DynDialog_AddItem(playerid, item_value, const text[], OPEN_MP_TAGS:...) {
+    DynDialog_AddItem(
+        playerid,
+        item_value,
+        LangPlus_ReturnLanguageString(
+            LangPlus_GetPlayerLanguage(playerid),
+            text
+        ),
+        ___(3)
+    );
+}
+```
+
 ## Testing
 
 To test, simply run the package:
