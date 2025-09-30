@@ -19,8 +19,10 @@
 #include <sscanf2>
 #include <PawnPlus>
 #include <strlib>
-#tryinclude <YSI_Coding\y_va>
 #tryinclude <YSI_Data\y_iterate>
+#if !defined _Y_ITERATE_LOCAL_VERSION
+    #tryinclude <foreach>
+#endif
 #tryinclude <logger>
 
 #if !defined MAX_LANGUAGES
@@ -81,6 +83,7 @@
 
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
        Pool:s_LanguagePool,
+       Map:s_LanguageNames,
        Map:s_StringReplacements,
        bool:s_LanguagePoolInitialized = false;
 
@@ -88,6 +91,7 @@ static Language:s_PlayerLanguage[MAX_PLAYERS];
 
 public OnGameModeInit() {
     s_LanguagePool = pool_new(MAX_LANGUAGES);
+    s_LanguageNames = map_new();
     s_LanguagePoolInitialized = true;
 
     #if defined LangPlus_OnGameModeInit
@@ -107,25 +111,27 @@ public OnPlayerConnect(playerid) {
     #endif
 }
 
-static Language:_InitLanguage(const string:langName[]) {
+static Language:_InitLanguage(const string:code[], const string:name[]) {
     if (pool_size(s_LanguagePool) == MAX_LANGUAGES) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "too many languages",
-                   Logger_S("language", langName));
+                   Logger_S("code", code));
         #endif
         return INVALID_LANGUAGE_ID;
     }
 
-    // pool_find_str returns the index, it's not a bool!
-    if (pool_find_str(s_LanguagePool, langName) != -1) {
+    if (pool_find_str(s_LanguagePool, code) != -1) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "language already exists",
-                   Logger_S("language", langName));
+                   Logger_S("code", code));
         #endif
         return INVALID_LANGUAGE_ID;
     }
 
-    return Language:pool_add_str(s_LanguagePool, langName);
+    new Language:languageid = Language:pool_add_str(s_LanguagePool, code);
+    map_set_arr(s_LanguageNames, _:languageid, name, MAX_LANGUAGE_NAME);
+
+    return languageid;
 }
 
 static bool:IsValidLanguage(Language:id) {
@@ -159,11 +165,12 @@ static bool:IsValidLanguage(Language:id) {
 }
 
 AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
-    if (!IsValidLanguage(languageid) || key[0] == EOS) {
+    if (!IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
         #if(defined _logger_included)
-        Logger_Dbg("langplus", "invalid language id or key",
+        Logger_Dbg("langplus", "invalid language id or key/value",
                    Logger_I("languageid", _:languageid),
-                   Logger_S("key", key));
+                   Logger_S("key", key),
+                   Logger_S("val", val));
         #endif
         return false;
     }
@@ -183,19 +190,20 @@ AddLanguageEntry(const Language:languageid, const string:key[], const string:val
 
 // This one shouldn't be a stock.
 // Importing the library and not using it is pointless
-Language:LoadLanguage(const string:langName[]) {
-    if (langName[0] == EOS) {
+Language:LoadLanguage(const string:code[], const string:name[], const string:fileName[] = "") {
+    if (code[0] == EOS || name[0] == EOS) {
         #if(defined _logger_included)
-        Logger_Dbg("langplus", "language name is empty");
+        Logger_Dbg("langplus", "code or name is empty");
         #endif
         return INVALID_LANGUAGE_ID;
     }
 
-    new Language:languageid = _InitLanguage(langName);
+    new Language:languageid = _InitLanguage(code, name);
     if (languageid == INVALID_LANGUAGE_ID) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "unable to initialize language",
-                   Logger_S("language", langName));
+                   Logger_S("code", code),
+                   Logger_S("name", name));
         #endif
 
         return INVALID_LANGUAGE_ID;
@@ -203,22 +211,28 @@ Language:LoadLanguage(const string:langName[]) {
 
     s_LanguageMap[languageid] = map_new();
 
-    new fileName[MAX_FILE_NAME],
+    new fileToLoad[MAX_FILE_NAME],
         File:fHandler,
         line[MAX_LANGUAGE_KEY_LEN + 1 + MAX_LANGUAGE_ENTRY_LENGTH],
         lineNumber,
         lineLength;
 
-    format(fileName, sizeof(fileName), #DIRECTORY_LANGUAGES "%s.ini", langName);
-    fHandler = fopen(fileName, io_read);
+    if (fileName[0] == EOS) {
+        format(fileToLoad, sizeof(fileToLoad), #DIRECTORY_LANGUAGES "%s.ini", code);
+    } else {
+        format(fileToLoad, sizeof(fileToLoad), #DIRECTORY_LANGUAGES "%s", fileName);
+    }
+
+    fHandler = fopen(fileToLoad, io_read);
 
     if (!fHandler) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "unable to open file",
-                   Logger_S("fileName", fileName));
+                   Logger_S("fileName", fileToLoad));
         #endif
 
         map_delete(s_LanguageMap[languageid]);
+        map_remove(s_LanguageNames, _:languageid);
         pool_remove(s_LanguagePool, _:languageid);
         return INVALID_LANGUAGE_ID;
     }
@@ -239,10 +253,11 @@ Language:LoadLanguage(const string:langName[]) {
         if (
             (line[0] < 'a' || line[0] > 'z')
             && (line[0] < 'A' || line[0] > 'Z')
+            && (line[0] == '!' || line[0] == '@')
+            && (line[0] == '$' || line[0] == '&')
             && (line[0] < '0' || line[0] > '9')
         ) {
             // Skip lines that don't start with a letter or digit (most likely comments)
-            // We also skip sections. These are only for users and translation software
             continue;
         }
 
@@ -250,16 +265,13 @@ Language:LoadLanguage(const string:langName[]) {
             #if(defined _logger_included)
             Logger_Dbg("langplus", "invalid line format",
                        Logger_I("line", lineNumber),
-                       Logger_S("file", fileName),
+                       Logger_S("file", fileToLoad),
                        Logger_S("line", line));
             #endif
 
             fclose(fHandler);
             return INVALID_LANGUAGE_ID;
         }
-
-        strtrim(key);
-        strtrim(val);
 
         strfromliteral(valFormatted, val);
 
@@ -279,15 +291,18 @@ Language:LoadLanguage(const string:langName[]) {
             #if(defined _logger_included)
             Logger_Dbg("langplus", "failed to add language entry",
                        Logger_I("line", lineNumber),
-                       Logger_S("file", fileName),
+                       Logger_S("file", fileToLoad),
                        Logger_S("key", key));
             #endif
 
             fclose(fHandler);
             map_delete(s_LanguageMap[languageid]);
+            map_remove(s_LanguageNames, _:languageid);
             pool_remove(s_LanguagePool, _:languageid);
             return INVALID_LANGUAGE_ID;
         }
+
+        lineNumber++;
     }
 
     fclose(fHandler);
@@ -386,11 +401,27 @@ stock GetLanguageList(string:languages[][], maxSize = sizeof(languages)) {
         if (index >= limit) {
             break;
         }
-        iter_get_value_str(it, languages[index], MAX_LANGUAGE_NAME);
+        new Language:langid = Language:iter_get_key(it);
+        map_get_arr(s_LanguageNames, _:langid, languages[index], MAX_LANGUAGE_NAME);
         index++;
     }
 
     return index;
+}
+
+stock bool:GetLanguageCode(Language:languageid, string:output[] = "", len = sizeof(output)) {
+    if (!IsValidLanguage(languageid)) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "invalid language id",
+                   Logger_I("languageid", _:languageid));
+        #endif
+
+        return false;
+    }
+
+    pool_get_value_str(s_LanguagePool, _:languageid, output, len);
+
+    return output[0] != '\0';
 }
 
 stock bool:GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output)) {
@@ -403,7 +434,7 @@ stock bool:GetLanguageName(Language:languageid, string:output[] = "", len = size
         return false;
     }
 
-    pool_get_value_str(s_LanguagePool, _:languageid, output, len);
+    map_get_arr(s_LanguageNames, _:languageid, output, len);
 
     return output[0] != '\0';
 }
@@ -489,10 +520,6 @@ stock Language:GetPlayerLanguage(playerid) {
     return s_PlayerLanguage[playerid];
 }
 
-stock bool:SetPlayerLanguageByName(playerid, const string:language[]) {
-    return SetPlayerLanguage(playerid, GetLanguageId(language));
-}
-
 stock Language:GetPlayerLanguageName(playerid, string:output[] = "", len = sizeof(output)) {
     if (!IsPlayerConnected(playerid)) {
         #if(defined _logger_included)
@@ -506,6 +533,132 @@ stock Language:GetPlayerLanguageName(playerid, string:output[] = "", len = sizeo
     GetLanguageName(s_PlayerLanguage[playerid], output);
 
     return s_PlayerLanguage[playerid];
+}
+
+stock bool:SendLanguageMessage(playerid, colour, const string:key[], {Float, _}:...) {
+    if (!IsPlayerConnected(playerid)) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "invalid player id",
+                   Logger_I("playerid", playerid));
+        #endif
+        return false;
+    }
+
+    new Language:langid = GetPlayerLanguage(playerid);
+    if (langid == INVALID_LANGUAGE_ID) {
+        return false;
+    }
+
+    const static_args = 3;
+    const args_diff = (3 - static_args) * 4;
+
+    static args;
+    args = numargs();
+
+    // Get the language string
+    new string:langString[MAX_LANGUAGE_ENTRY_LENGTH];
+    GetLanguageString(langid, key, langString);
+
+    if (args > static_args) {
+        static string:formatted[MAX_LANGUAGE_ENTRY_LENGTH];
+        const formatted_size = sizeof(formatted);
+
+        while (--args >= static_args) {
+            #emit LCTRL 5
+            #emit LOAD.alt args
+            #emit SHL.C.alt 2
+            #emit ADD.C 12
+            #emit ADD
+            #emit LOAD.I
+            #emit PUSH.pri
+        }
+
+        #emit ADDR.pri langString
+        #emit PUSH.pri
+        #emit PUSH.C formatted_size
+        #emit PUSH.C formatted
+        #emit LOAD.S.pri 8
+        #emit ADD.C args_diff
+        #emit PUSH.pri
+        #emit SYSREQ.C format
+        #emit LCTRL 5
+        #emit SCTRL 4
+
+        return SendClientMessage(playerid, colour, formatted);
+    }
+
+    return SendClientMessage(playerid, colour, langString);
+}
+
+stock bool:SendLanguageMessageToAll(colour, const string:key[], {Float, _}:...) {
+    const static_args = 2;
+    const args_diff = (3 - static_args) * 4;
+
+    static args;
+    args = numargs();
+
+    new bool:anySuccess = false;
+
+    // Iterate through all players
+    #if defined _foreach_included || defined foreach_included || defined _Y_ITERATE_LOCAL_VERSION
+    foreach (new i : Player)
+    #else
+    for (new i = 0; i < GetMaxPlayers(); i++)
+    #endif
+    {
+        #if !defined _foreach_included && !defined foreach_included && !defined _Y_ITERATE_LOCAL_VERSION
+        if (!IsPlayerConnected(i)) {
+            continue;
+        }
+        #endif
+
+        new Language:langid = GetPlayerLanguage(i);
+        if (langid == INVALID_LANGUAGE_ID) {
+            continue;
+        }
+
+        // Get the language string for this player
+        new string:langString[MAX_LANGUAGE_ENTRY_LENGTH];
+        GetLanguageString(langid, key, langString);
+
+        if (args > static_args) {
+            static string:formatted[MAX_LANGUAGE_ENTRY_LENGTH];
+            const formatted_size = sizeof(formatted);
+
+            static varargs;
+            varargs = args;
+
+            while (--varargs >= static_args) {
+                #emit LCTRL 5
+                #emit LOAD.alt varargs
+                #emit SHL.C.alt 2
+                #emit ADD.C 12
+                #emit ADD
+                #emit LOAD.I
+                #emit PUSH.pri
+            }
+
+            #emit ADDR.pri langString
+            #emit PUSH.pri
+            #emit PUSH.C formatted_size
+            #emit PUSH.C formatted
+            #emit LOAD.S.pri 4
+            #emit ADD.C args_diff
+            #emit PUSH.pri
+            #emit SYSREQ.C format
+            #emit LCTRL 5
+            #emit SCTRL 4
+
+            if (SendClientMessage(i, colour, formatted)) {
+                anySuccess = true;
+            }
+        } else {
+            if (SendClientMessage(i, colour, langString)) {
+                anySuccess = true;
+            }
+        }
+    }
+    return anySuccess;
 }
 
 // ALS
