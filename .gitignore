@@ -8,7 +8,10 @@
 *.asm
 
 # Vendor directory for dependencies
-dependencies/
+dependencies/*
+!dependencies/omp-stdlib
+!dependencies/PawnPlus
+!dependencies/strlib
 components/
 
 # Dependency versions lockfile
@@ -53,4 +56,5 @@ samp.ban
 #
 
 *.sublime-workspace
+.vscode/
 scriptfiles/YSI

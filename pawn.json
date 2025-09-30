@@ -7,13 +7,12 @@
 		"openmultiplayer/omp-stdlib",
 		"pawn-lang/samp-stdlib@open.mp",
 		"pawn-lang/pawn-stdlib@open.mp",
-		"pawn-lang/YSI-Includes@5.x",
 		"Y-Less/sscanf",
 		"oscar-broman/strlib",
 		"IS4Code/PawnPlus"
 	],
 	"dev_dependencies": [
-		"Y-Less/samp-plugin-crashdetect:v4.22",
+		"AmyrAhmady/samp-plugin-crashdetect:v4.22",
 		"Southclaws/samp-logger"
 	],
 	"runtime": {

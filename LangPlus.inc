@@ -67,16 +67,16 @@
 #define INVALID_LANGUAGE_ID (Language:-1)
 
 #if defined SS_LANG_COMPATIBILITY
-    #define DefineLanguageReplacement LangPlus_SetStringReplacement
-    #define InitLanguage LangPlus_LoadLanguage
-    #define AddLanguageEntry LangPlus_AddLanguageEntry
-    #define GetLanguageString LangPlus_GetLanguageString
-    #define GetLanguageList LangPlus_GetLanguageList
-    #define GetLanguageID LangPlus_GetLanguageId
-    #define GetLanguageName LangPlus_GetLanguageName
-    #define GetPlayerLanguage LangPlus_GetPlayerLanguage
-    #define SetPlayerLanguage LangPlus_SetPlayerLanguage
-    #define @L(%0,%1) LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(%0), %1)
+    #define DefineLanguageReplacement SetStringReplacement
+    #define InitLanguage LoadLanguage
+    #define AddLanguageEntry AddLanguageEntry
+    #define GetLanguageString GetLanguageString
+    #define GetLanguageList GetLanguageList
+    #define GetLanguageID GetLanguageId
+    #define GetLanguageName GetLanguageName
+    #define GetPlayerLanguage GetPlayerLanguage
+    #define SetPlayerLanguage SetPlayerLanguage
+    #define @L(%0,%1) ReturnLanguageString(GetPlayerLanguage(%0), %1)
 #endif
 
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
@@ -126,7 +126,7 @@ static Language:_InitLanguage(const string:langName[]) {
     return Language:pool_add_str(s_LanguagePool, langName);
 }
 
-static bool:LangPlus_IsValidLanguage(Language:id) {
+static bool:IsValidLanguage(Language:id) {
     if (!pool_valid(s_LanguagePool)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
@@ -156,8 +156,8 @@ static bool:LangPlus_IsValidLanguage(Language:id) {
     return pool_has(s_LanguagePool, _:id);
 }
 
-LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
-    if (!LangPlus_IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
+AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
+    if (!IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id or key/value",
                    Logger_I("languageid", _:languageid),
@@ -190,7 +190,7 @@ LangPlus_AddLanguageEntry(const Language:languageid, const string:key[], const s
 
 // This one shouldn't be a stock.
 // Importing the library and not using it is pointless
-Language:LangPlus_LoadLanguage(const string:langName[]) {
+Language:LoadLanguage(const string:langName[]) {
     new Language:languageid = _InitLanguage(langName);
     if (languageid == INVALID_LANGUAGE_ID) {
         #if(defined _logger_included)
@@ -267,7 +267,7 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
             }
         }
 
-        LangPlus_AddLanguageEntry(languageid, key, valFormatted);
+        AddLanguageEntry(languageid, key, valFormatted);
 
         lineNumber++;
     }
@@ -277,7 +277,7 @@ Language:LangPlus_LoadLanguage(const string:langName[]) {
     return languageid;
 }
 
-stock bool:LangPlus_SetStringReplacement(const string:key[], const string:value[]) {
+stock bool:SetStringReplacement(const string:key[], const string:value[]) {
     if (key[0] == EOS || value[0] == EOS) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid key/value",
@@ -324,7 +324,7 @@ stock bool:LangPlus_SetStringReplacement(const string:key[], const string:value[
     return true;
 }
 
-stock Language:LangPlus_GetLanguageId(const string:language[]) {
+stock Language:GetLanguageId(const string:language[]) {
     if (pool_size(s_LanguagePool) == 0) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
@@ -336,7 +336,7 @@ stock Language:LangPlus_GetLanguageId(const string:language[]) {
     return Language:pool_find_str(s_LanguagePool, language);
 }
 
-stock LangPlus_GetLanguageList(string:languages[][]) {
+stock GetLanguageList(string:languages[][]) {
     if (pool_size(s_LanguagePool) == 0) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
@@ -356,8 +356,8 @@ stock LangPlus_GetLanguageList(string:languages[][]) {
     return pool_size(s_LanguagePool);
 }
 
-stock bool:LangPlus_GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output)) {
-    if (!LangPlus_IsValidLanguage(languageid)) {
+stock bool:GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output)) {
+    if (!IsValidLanguage(languageid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id",
                    Logger_I("languageid", _:languageid));
@@ -371,8 +371,8 @@ stock bool:LangPlus_GetLanguageName(Language:languageid, string:output[] = "", l
     return output[0] != '\0';
 }
 
-stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], string:output[], len = sizeof(output)) {
-    if (!LangPlus_IsValidLanguage(languageid)) {
+stock bool:GetLanguageString(Language:languageid, const string:key[], string:output[], len = sizeof(output)) {
+    if (!IsValidLanguage(languageid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id",
                    Logger_I("languageid", _:languageid));
@@ -389,7 +389,7 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
         #endif
 
         if (languageid != Language:0) {
-            return LangPlus_GetLanguageString(Language:0, key, output, len);
+            return GetLanguageString(Language:0, key, output, len);
         }
 
         #if(defined _logger_included)
@@ -398,7 +398,7 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
                    Logger_S("key", key));
         #endif
 
-        strcpy(output, key, MAX_LANGUAGE_ENTRY_LENGTH);
+        strcopy(output, key, MAX_LANGUAGE_ENTRY_LENGTH);
 
         return true;
     }
@@ -408,15 +408,15 @@ stock bool:LangPlus_GetLanguageString(Language:languageid, const string:key[], s
     return true;
 }
 
-stock LangPlus_ReturnLanguageString(Language:languageid, const string:key[]) {
+stock ReturnLanguageString(Language:languageid, const string:key[]) {
     new string:result[MAX_LANGUAGE_ENTRY_LENGTH + 1];
-    LangPlus_GetLanguageString(languageid, key, result);
+    GetLanguageString(languageid, key, result);
 
     return result;
 }
 
-stock bool:LangPlus_SetPlayerLanguage(playerid, Language:languageid) {
-    if (!LangPlus_IsValidLanguage(languageid)) {
+stock bool:SetPlayerLanguage(playerid, Language:languageid) {
+    if (!IsValidLanguage(languageid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid language id",
                    Logger_I("languageid", _:languageid));
@@ -439,7 +439,7 @@ stock bool:LangPlus_SetPlayerLanguage(playerid, Language:languageid) {
     return true;
 }
 
-stock Language:LangPlus_GetPlayerLanguage(playerid) {
+stock Language:GetPlayerLanguage(playerid) {
     if (!IsPlayerConnected(playerid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid player id",
@@ -452,11 +452,11 @@ stock Language:LangPlus_GetPlayerLanguage(playerid) {
     return s_PlayerLanguage[playerid];
 }
 
-stock bool:LangPlus_SetPlayerLanguageByName(playerid, const string:language[]) {
-    return LangPlus_SetPlayerLanguage(playerid, LangPlus_GetLanguageId(language));
+stock bool:SetPlayerLanguageByName(playerid, const string:language[]) {
+    return SetPlayerLanguage(playerid, GetLanguageId(language));
 }
 
-stock Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", len = sizeof(output)) {
+stock Language:GetPlayerLanguageName(playerid, string:output[] = "", len = sizeof(output)) {
     if (!IsPlayerConnected(playerid)) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "invalid player id",
@@ -466,71 +466,10 @@ stock Language:LangPlus_GetPlayerLanguageName(playerid, string:output[] = "", le
         return INVALID_LANGUAGE_ID;
     }
 
-    LangPlus_GetLanguageName(s_PlayerLanguage[playerid], output);
+    GetLanguageName(s_PlayerLanguage[playerid], output);
 
     return s_PlayerLanguage[playerid];
 }
-
-#if defined _INC_y_va
-#if defined LANGPLUS_REPLACE_NATIVES
-LangPlus_SendClientMessage(playerid, colour, const format[], OPEN_MP_TAGS:...) {
-    new Language:playerLanguage;
-    playerLanguage = LangPlus_GetPlayerLanguage(playerid);
-
-    if (playerLanguage == INVALID_LANGUAGE_ID) {
-        return SendClientMessage(playerid, colour, format, ___(3));
-    }
-
-    new langMessage[144];
-
-    new bool:ret;
-    ret = LangPlus_GetLanguageString(playerLanguage, format, langMessage);
-
-    if (ret) {
-        SendClientMessage(playerid, colour, langMessage, ___(3));
-        return true;
-    }
-
-    SendClientMessage(playerid, colour, format, ___(3));
-    return true;
-}
-
-bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
-    foreach (new i : Player) {
-        SendClientMessage(
-            i,
-            color,
-            msg,
-            ___(2)
-        );
-    }
-
-    return true;
-}
-#else
-stock bool:LangPlus_SendClientMessage(playerid, color, const string:msg[], OPEN_MP_TAGS:...) {
-    return SendClientMessage(
-               playerid,
-               color,
-               LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(playerid), msg),
-               ___(3)
-           );
-}
-
-stock bool:LangPlus_SendClientMessageToAll(color, const string:msg[], OPEN_MP_TAGS:...) {
-    foreach (new i : Player) {
-        SendClientMessage(
-            i,
-            color,
-            LangPlus_ReturnLanguageString(LangPlus_GetPlayerLanguage(i), msg),
-            ___(2)
-        );
-    }
-
-    return true;
-}
-#endif
-#endif
 
 // ALS
 
@@ -552,15 +491,4 @@ forward LangPlus_OnGameModeInit();
 #define OnPlayerConnect LangPlus_OnPlayerConnect
 #if defined LangPlus_OnPlayerConnect
 forward LangPlus_OnPlayerConnect(playerid);
-#endif
-
-#if defined LANGPLUS_REPLACE_NATIVES
-    #if defined _ALS_SendClientMessage
-        #undef SendClientMessage
-    #else
-        #define _ALS_SendClientMessage
-    #endif
-    #define SendClientMessage LangPlus_SendClientMessage
-
-    #define SendClientMessageToAll LangPlus_SendClientMessageToAll
 #endif
