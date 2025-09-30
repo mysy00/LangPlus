@@ -81,12 +81,14 @@
 
 static Map:s_LanguageMap[Language:MAX_LANGUAGES],
        Pool:s_LanguagePool,
-       Map:s_StringReplacements;
+       Map:s_StringReplacements,
+       bool:s_LanguagePoolInitialized = false;
 
 static Language:s_PlayerLanguage[MAX_PLAYERS];
 
 public OnGameModeInit() {
     s_LanguagePool = pool_new(MAX_LANGUAGES);
+    s_LanguagePoolInitialized = true;
 
     #if defined LangPlus_OnGameModeInit
     return LangPlus_OnGameModeInit();
@@ -127,7 +129,7 @@ static Language:_InitLanguage(const string:langName[]) {
 }
 
 static bool:IsValidLanguage(Language:id) {
-    if (!pool_valid(s_LanguagePool)) {
+    if (!s_LanguagePoolInitialized) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
         #endif
@@ -157,20 +159,11 @@ static bool:IsValidLanguage(Language:id) {
 }
 
 AddLanguageEntry(const Language:languageid, const string:key[], const string:val[]) {
-    if (!IsValidLanguage(languageid) || key[0] == EOS || val[0] == EOS) {
+    if (!IsValidLanguage(languageid) || key[0] == EOS) {
         #if(defined _logger_included)
-        Logger_Dbg("langplus", "invalid language id or key/value",
+        Logger_Dbg("langplus", "invalid language id or key",
                    Logger_I("languageid", _:languageid),
-                   Logger_S("key", key),
-                   Logger_S("val", val));
-        #endif
-        return false;
-    }
-
-    if (!pool_has(s_LanguagePool, _:languageid))  {
-        #if(defined _logger_included)
-        Logger_Dbg("langplus", "invalid language id",
-                   Logger_I("languageid", _:languageid));
+                   Logger_S("key", key));
         #endif
         return false;
     }
@@ -191,6 +184,13 @@ AddLanguageEntry(const Language:languageid, const string:key[], const string:val
 // This one shouldn't be a stock.
 // Importing the library and not using it is pointless
 Language:LoadLanguage(const string:langName[]) {
+    if (langName[0] == EOS) {
+        #if(defined _logger_included)
+        Logger_Dbg("langplus", "language name is empty");
+        #endif
+        return INVALID_LANGUAGE_ID;
+    }
+
     new Language:languageid = _InitLanguage(langName);
     if (languageid == INVALID_LANGUAGE_ID) {
         #if(defined _logger_included)
@@ -206,7 +206,7 @@ Language:LoadLanguage(const string:langName[]) {
     new fileName[MAX_FILE_NAME],
         File:fHandler,
         line[MAX_LANGUAGE_KEY_LEN + 1 + MAX_LANGUAGE_ENTRY_LENGTH],
-        lineNumber = 1,
+        lineNumber,
         lineLength;
 
     format(fileName, sizeof(fileName), #DIRECTORY_LANGUAGES "%s.ini", langName);
@@ -218,6 +218,8 @@ Language:LoadLanguage(const string:langName[]) {
                    Logger_S("fileName", fileName));
         #endif
 
+        map_delete(s_LanguageMap[languageid]);
+        pool_remove(s_LanguagePool, _:languageid);
         return INVALID_LANGUAGE_ID;
     }
 
@@ -226,6 +228,7 @@ Language:LoadLanguage(const string:langName[]) {
         valFormatted[MAX_LANGUAGE_ENTRY_LENGTH];
 
     while (fread(fHandler, line)) {
+        lineNumber++;
         lineLength = strlen(line);
 
         if (lineLength < 3) {
@@ -234,10 +237,11 @@ Language:LoadLanguage(const string:langName[]) {
         }
 
         if (
-            (line[0] < 97 || line[0] > 122)
-            && (line[0] < 65 || line[0] > 90)
+            (line[0] < 'a' || line[0] > 'z')
+            && (line[0] < 'A' || line[0] > 'Z')
+            && (line[0] < '0' || line[0] > '9')
         ) {
-            // Skip lines that don't start with a letter (most likely comments)
+            // Skip lines that don't start with a letter or digit (most likely comments)
             // We also skip sections. These are only for users and translation software
             continue;
         }
@@ -250,8 +254,12 @@ Language:LoadLanguage(const string:langName[]) {
                        Logger_S("line", line));
             #endif
 
+            fclose(fHandler);
             return INVALID_LANGUAGE_ID;
         }
+
+        strtrim(key);
+        strtrim(val);
 
         strfromliteral(valFormatted, val);
 
@@ -267,9 +275,19 @@ Language:LoadLanguage(const string:langName[]) {
             }
         }
 
-        AddLanguageEntry(languageid, key, valFormatted);
+        if (!AddLanguageEntry(languageid, key, valFormatted)) {
+            #if(defined _logger_included)
+            Logger_Dbg("langplus", "failed to add language entry",
+                       Logger_I("line", lineNumber),
+                       Logger_S("file", fileName),
+                       Logger_S("key", key));
+            #endif
 
-        lineNumber++;
+            fclose(fHandler);
+            map_delete(s_LanguageMap[languageid]);
+            pool_remove(s_LanguagePool, _:languageid);
+            return INVALID_LANGUAGE_ID;
+        }
     }
 
     fclose(fHandler);
@@ -324,8 +342,24 @@ stock bool:SetStringReplacement(const string:key[], const string:value[]) {
     return true;
 }
 
+stock GetLanguageCount() {
+    if (!s_LanguagePoolInitialized) {
+        return 0;
+    }
+
+    return pool_size(s_LanguagePool);
+}
+
+stock bool:HasLanguage(const string:language[]) {
+    if (!s_LanguagePoolInitialized || language[0] == EOS) {
+        return false;
+    }
+
+    return pool_find_str(s_LanguagePool, language) != -1;
+}
+
 stock Language:GetLanguageId(const string:language[]) {
-    if (pool_size(s_LanguagePool) == 0) {
+    if (!s_LanguagePoolInitialized) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
         #endif
@@ -336,24 +370,27 @@ stock Language:GetLanguageId(const string:language[]) {
     return Language:pool_find_str(s_LanguagePool, language);
 }
 
-stock GetLanguageList(string:languages[][]) {
-    if (pool_size(s_LanguagePool) == 0) {
+stock GetLanguageList(string:languages[][], maxSize = sizeof(languages)) {
+    if (!s_LanguagePoolInitialized) {
         #if(defined _logger_included)
         Logger_Dbg("langplus", "no languages have been initialized");
         #endif
         return 0;
     }
 
-    new langName[MAX_LANGUAGE_NAME + 1],
-        index;
+    new index,
+        poolSize = pool_size(s_LanguagePool),
+        limit = (poolSize < maxSize) ? poolSize : maxSize;
 
     for_pool(it : s_LanguagePool) {
-        iter_get_value_str(it, langName);
-        strcopy(languages[index], langName, MAX_LANGUAGE_NAME);
+        if (index >= limit) {
+            break;
+        }
+        iter_get_value_str(it, languages[index], MAX_LANGUAGE_NAME);
         index++;
     }
 
-    return pool_size(s_LanguagePool);
+    return index;
 }
 
 stock bool:GetLanguageName(Language:languageid, string:output[] = "", len = sizeof(output)) {
@@ -388,7 +425,7 @@ stock bool:GetLanguageString(Language:languageid, const string:key[], string:out
                    Logger_S("key", key));
         #endif
 
-        if (languageid != Language:0) {
+        if (languageid != Language:0 && IsValidLanguage(Language:0)) {
             return GetLanguageString(Language:0, key, output, len);
         }
 
@@ -398,9 +435,9 @@ stock bool:GetLanguageString(Language:languageid, const string:key[], string:out
                    Logger_S("key", key));
         #endif
 
-        strcopy(output, key, MAX_LANGUAGE_ENTRY_LENGTH);
+        strcopy(output, key, len);
 
-        return true;
+        return false;
     }
 
     map_str_get_str(s_LanguageMap[languageid], key, output, len);

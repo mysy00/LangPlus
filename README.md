@@ -64,10 +64,12 @@ WELCOME_MESSAGE=Вітаємо на сервері, гравець %d!
 
 | Function | Description |
 |---|---|
-| `Language:LoadLanguage(const langName[])` | Loads a language from a `.ini` file. Returns the language ID. |
+| `Language:LoadLanguage(const langName[])` | Loads a language from a `.ini` file. Returns the language ID. Keys and values are automatically trimmed of whitespace. |
 | `bool:SetStringReplacement(const key[], const value[])` | Defines a string replacement to be used when loading languages. Must be called **before** `LoadLanguage`. |
+| `GetLanguageCount()` | Returns the number of languages currently loaded. |
+| `bool:HasLanguage(const language[])` | Checks if a language exists without logging errors. Returns `true` if the language is loaded. |
 | `Language:GetLanguageId(const language[])` | Gets the ID of a loaded language by its name. |
-| `GetLanguageList(string:languages[][])` | Fills a 2D array with the names of all loaded languages and returns the count. |
+| `GetLanguageList(string:languages[][], maxSize = sizeof(languages))` | Fills a 2D array with the names of all loaded languages and returns the count. The `maxSize` parameter prevents buffer overflows. |
 | `bool:GetLanguageName(Language:id, name[], len)` | Gets the name of a language by its ID. |
 
 ### String Functions
@@ -101,6 +103,14 @@ Define these options **before** including the library to override the default va
 | `MAX_FILE_NAME` | `64` | The maximum length of a language file name. |
 | `MAX_REPLACEMENT_KEY_LEN` | `16` | The maximum length of a replacement key. |
 | `MAX_REPLACEMENT_VALUE_LEN` | `16` | The maximum length of a replacement value. |
+
+## Features
+
+- **Automatic whitespace trimming**: Keys and values are automatically trimmed of leading/trailing whitespace
+- **Empty values allowed**: Translation entries can have empty values (useful for optional text)
+- **Fallback system**: If a key doesn't exist in the requested language, it falls back to Language:0
+- **Memory safe**: Proper cleanup on errors prevents memory leaks
+- **Buffer overflow protection**: All string operations respect buffer sizes
 
 ## Integrations
 

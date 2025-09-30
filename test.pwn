@@ -22,7 +22,20 @@ public OnGameModeInit() {
     g_LangEnglish = LoadLanguage("English");
     g_LangUkrainian = LoadLanguage("Ukrainian");
 
-    new langList[MAX_LANGUAGES][MAX_LANGUAGES * MAX_LANGUAGE_NAME];
+    print("#########################################");
+    print("## TEST: GetLanguageCount & HasLanguage ##");
+    print("#########################################");
+
+    printf("Total languages loaded: %d", GetLanguageCount());
+    printf("Has 'English': %d", HasLanguage("English"));
+    printf("Has 'Ukrainian': %d", HasLanguage("Ukrainian"));
+    printf("Has 'NonExistent': %d", HasLanguage("NonExistent"));
+
+    print("#########################################");
+    print("## TEST: GetLanguageList ##");
+    print("#########################################");
+
+    new langList[MAX_LANGUAGES][MAX_LANGUAGE_NAME];
     new langCount = GetLanguageList(langList);
 
     printf("Available languages: %d", langCount);
