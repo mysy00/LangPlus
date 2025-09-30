@@ -2,17 +2,13 @@
 
 [![sampctl](https://img.shields.io/badge/sampctl-LangPlus-2f2f2f.svg?style=for-the-badge)](https://github.com/mysy00/LangPlus)
 
-LangPlus is a lightweight and powerful library for open.mp that allows you to easily create multilanguage servers. It uses simple INI files for language strings and provides a flexible API to manage languages for players.
+A lightweight multilanguage library for open.mp servers. Uses simple INI files for translations and provides an easy-to-use API for managing player languages.
 
 ## Installation
 
-Simply install to your project:
-
 ```bash
-sampctl package install mysy00/LangPlus
+sampctl install mysy00/LangPlus
 ```
-
-Include in your code and begin using the library:
 
 ```pawn
 #include <LangPlus>
@@ -20,149 +16,104 @@ Include in your code and begin using the library:
 
 ## Quick Start
 
-Here is a minimal example to get you started.
-
 **`gamemodes/main.pwn`**
 ```pawn
 #include <LangPlus>
 
-new Language:g_LangEnglish;
-new Language:g_LangUkrainian;
+new Language:g_English, Language:g_Ukrainian;
 
 public OnGameModeInit() {
-    // Load languages from scriptfiles/languages/
-    g_LangEnglish = LoadLanguage("English");
-    g_LangUkrainian = LoadLanguage("Ukrainian");
+    g_English = LoadLanguage("en", "English");
+    g_Ukrainian = LoadLanguage("uk", "Ukrainian");
     return 1;
 }
 
 public OnPlayerConnect(playerid) {
-    // Set player's language to Ukrainian
-    SetPlayerLanguage(playerid, g_LangUkrainian);
-
-    // Send a localized message to the player
-    new msg[128];
-    GetLanguageString(GetPlayerLanguage(playerid), "WELCOME_MESSAGE", msg, sizeof(msg), playerid);
-    SendClientMessage(playerid, 0xFFFFFFFF, msg);
+    SetPlayerLanguage(playerid, g_Ukrainian);
+    SendLanguageMessage(playerid, -1, "WELCOME_MESSAGE", playerid);
+    SendLanguageMessageToAll(-1, "PLAYER_JOINED", playerid);
     return 1;
 }
 ```
 
-**`scriptfiles/languages/English.ini`**
+**`scriptfiles/languages/en.ini`**
 ```ini
-WELCOME_MESSAGE=Welcome to the server, player %d!
+WELCOME_MESSAGE=Welcome, player %d!
+PLAYER_JOINED=Player %d joined
 ```
 
-**`scriptfiles/languages/Ukrainian.ini`**
+**`scriptfiles/languages/uk.ini`**
 ```ini
-WELCOME_MESSAGE=Вітаємо на сервері, гравець %d!
+WELCOME_MESSAGE=Вітаємо, гравець %d!
+PLAYER_JOINED=Гравець %d приєднався
 ```
 
 ## API Reference
 
-### Core Functions
-
 | Function | Description |
-|---|---|
-| `Language:LoadLanguage(const langName[])` | Loads a language from a `.ini` file. Returns the language ID. Keys and values are automatically trimmed of whitespace. |
-| `bool:SetStringReplacement(const key[], const value[])` | Defines a string replacement to be used when loading languages. Must be called **before** `LoadLanguage`. |
-| `GetLanguageCount()` | Returns the number of languages currently loaded. |
-| `bool:HasLanguage(const language[])` | Checks if a language exists without logging errors. Returns `true` if the language is loaded. |
-| `Language:GetLanguageId(const language[])` | Gets the ID of a loaded language by its name. |
-| `GetLanguageList(string:languages[][], maxSize = sizeof(languages))` | Fills a 2D array with the names of all loaded languages and returns the count. The `maxSize` parameter prevents buffer overflows. |
-| `bool:GetLanguageName(Language:id, name[], len)` | Gets the name of a language by its ID. |
-
-### String Functions
-
-| Function | Description |
-|---|---|
-| `bool:GetLanguageString(Language:id, const key[], output[], len, ...)` | Gets a translated string for a given language ID and key. Supports format specifiers. |
-| `ReturnLanguageString(Language:id, const key[], ...)` | Returns a translated string. **Note:** The returned string is temporary and should be used immediately. |
-
-### Player Functions
-
-| Function | Description |
-|---|---|
-| `bool:SetPlayerLanguage(playerid, Language:id)` | Sets the language for a player. |
-| `Language:GetPlayerLanguage(playerid)` | Gets the current language ID for a player. |
-| `bool:SetPlayerLanguageByName(playerid, const language[])` | Sets the language for a player by language name. |
-| `Language:GetPlayerLanguageName(playerid, name[], len)` | Gets the name of the player's current language. |
+|----------|-------------|
+| `Language:LoadLanguage(code[], name[], fileName[])` | Load a language from INI file |
+| `SetPlayerLanguage(playerid, Language:id)` | Set player's language |
+| `Language:GetPlayerLanguage(playerid)` | Get player's current language |
+| `SendLanguageMessage(playerid, colour, key[], ...)` | Send localized message to player (supports format specifiers) |
+| `SendLanguageMessageToAll(colour, key[], ...)` | Send localized message to all players in their language |
+| `GetLanguageString(Language:id, key[], output[], len)` | Get translated string for a language |
+| `ReturnLanguageString(Language:id, key[])` | Return translated string (use immediately) |
+| `GetLanguageCount()` | Get number of loaded languages |
+| `bool:HasLanguage(code[])` | Check if language exists |
+| `GetLanguageList(languages[][], maxSize)` | Get array of language display names |
+| `SetStringReplacement(key[], value[])` | Define replacement for language loading (call before `LoadLanguage`) |
 
 ## Configuration
 
-Define these options **before** including the library to override the default values.
+Define before including the library:
 
 | Macro | Default | Description |
-|---|---|---|
-| `MAX_LANGUAGES` | `4` | The maximum number of languages that can be loaded. |
-| `DELIMITER_CHAR` | `"="` | The character used to separate keys and values in the `.ini` files. |
-| `DIRECTORY_LANGUAGES` | `"languages/"` | The directory where language files are stored. |
-| `MAX_LANGUAGE_KEY_LEN` | `32` | The maximum length of a language key. |
-| `MAX_LANGUAGE_ENTRY_LENGTH` | `768` | The maximum length of a language string. |
-| `MAX_LANGUAGE_NAME` | `32` | The maximum length of a language name. |
-| `MAX_FILE_NAME` | `64` | The maximum length of a language file name. |
-| `MAX_REPLACEMENT_KEY_LEN` | `16` | The maximum length of a replacement key. |
-| `MAX_REPLACEMENT_VALUE_LEN` | `16` | The maximum length of a replacement value. |
+|-------|---------|-------------|
+| `MAX_LANGUAGES` | `4` | Maximum number of languages |
+| `DELIMITER_CHAR` | `"="` | Key-value separator in INI files |
+| `DIRECTORY_LANGUAGES` | `"languages/"` | Language files directory |
+| `MAX_LANGUAGE_KEY_LEN` | `32` | Maximum key length |
+| `MAX_LANGUAGE_ENTRY_LENGTH` | `768` | Maximum translation length |
+| `MAX_LANGUAGE_NAME` | `32` | Maximum language name length |
+| `MAX_FILE_NAME` | `64` | Maximum file name length |
+| `MAX_REPLACEMENT_KEY_LEN` | `16` | Maximum replacement key length |
+| `MAX_REPLACEMENT_VALUE_LEN` | `16` | Maximum replacement value length |
+
+Example:
+```pawn
+#define MAX_LANGUAGES 8
+#define DIRECTORY_LANGUAGES "translations/"
+#include <LangPlus>
+```
+
+## Language File Syntax
+
+Language files use INI format with the following rules:
+
+- **Key format**: Keys must start with a letter (a-z, A-Z), digit (0-9), or symbol (`!`, `@`, `$`, `&`)
+- **Delimiter**: Keys and values are separated by `=` (configurable via `DELIMITER_CHAR`)
+- **Comments**: Lines starting with other characters are ignored (e.g., `;`, `#`, `[`)
+- **Escape sequences**: Supports `\n`, `\t`, etc. in values
+- **Format specifiers**: Values can contain `%d`, `%s`, `%f`, and other format specifiers
+
+Example:
+```ini
+; This is a comment
+WELCOME_MESSAGE=Welcome, player %d!
+@ADMIN_COMMAND=Admin %s used command
+$ERROR_MESSAGE=Error: %s
+```
 
 ## Features
 
-- **Automatic whitespace trimming**: Keys and values are automatically trimmed of leading/trailing whitespace
-- **Empty values allowed**: Translation entries can have empty values (useful for optional text)
-- **Fallback system**: If a key doesn't exist in the requested language, it falls back to Language:0
-- **Memory safe**: Proper cleanup on errors prevents memory leaks
-- **Buffer overflow protection**: All string operations respect buffer sizes
-
-## Integrations
-
-### tdialogs
-
-Here is an example of how to use LangPlus with [tdialogs](https://github.com/TommyB123/tdialogs) to create a language selection dialog:
-
-**Code:**
-```pawn
-#define PP_SYNTAX_AWAIT
-#define PP_SYNTAX_YIELD
-#include <LangPlus>
-#include <tdialogs>
-
-ShowPlayerLanguageDialog(playerid) {
-    yield 1;
-
-    new dialog_string[256];
-    new header_string[64];
-    new button_string[32];
-
-    GetLanguageString(GetPlayerLanguage(playerid), "DIALOG_LANG_TITLE", header_string, sizeof(header_string));
-    GetLanguageString(GetPlayerLanguage(playerid), "DIALOG_LANG_SELECT", button_string, sizeof(button_string));
-
-    // Build the list of languages
-    new langList[MAX_LANGUAGES][MAX_LANGUAGE_NAME];
-    new langCount = GetLanguageList(langList);
-    for (new i = 0; i < langCount; i++) {
-        strcat(dialog_string, langList[i]);
-        strcat(dialog_string, "\n");
-    }
-
-    // Show async dialog and await response
-    new listitem = await ShowAsyncListitemIndexDialog(playerid, header_string, dialog_string, button_string, "Cancel");
-
-    if (listitem != -1) {
-        SetPlayerLanguageByName(playerid, langList[listitem]);
-        SendClientMessage(playerid, -1, ReturnLanguageString(GetPlayerLanguage(playerid), "LANGUAGE_CHANGED"));
-    }
-}
-```
-
-**Language File (`English.ini`):**
-```ini
-DIALOG_LANG_TITLE=Select Language
-DIALOG_LANG_SELECT=Select
-LANGUAGE_CHANGED=Language changed successfully.
-```
+- **Fallback system** - Missing keys fall back to the default language, that is: Language:0
+- **String replacements** - Use `SetStringReplacement()` for dynamic text substitution
+- **Format specifiers** - Full support for `%d`, `%s`, `%f`, etc.
+- **Escape sequences** - Supports `\n`, `\t` in language files
+- **Auto-trimming** - Keys and values automatically trimmed
 
 ## Testing
-
-To test, simply run the package:
 
 ```bash
 sampctl run
@@ -170,4 +121,4 @@ sampctl run
 
 ## Credits
 
-- [ScavengeSurvive/language](https://github.com/ScavengeSurvive/language)
+Inspired by [ScavengeSurvive/language](https://github.com/ScavengeSurvive/language)
