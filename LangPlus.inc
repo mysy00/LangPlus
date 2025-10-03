@@ -253,8 +253,8 @@ Language:LoadLanguage(const string:code[], const string:name[], const string:fil
         if (
             (line[0] < 'a' || line[0] > 'z')
             && (line[0] < 'A' || line[0] > 'Z')
-            && (line[0] == '!' || line[0] == '@')
-            && (line[0] == '$' || line[0] == '&')
+            && (line[0] != '!' && line[0] != '@')
+            && (line[0] != '$' && line[0] != '&')
             && (line[0] < '0' || line[0] > '9')
         ) {
             // Skip lines that don't start with a letter or digit (most likely comments)
@@ -301,8 +301,6 @@ Language:LoadLanguage(const string:code[], const string:name[], const string:fil
             pool_remove(s_LanguagePool, _:languageid);
             return INVALID_LANGUAGE_ID;
         }
-
-        lineNumber++;
     }
 
     fclose(fHandler);

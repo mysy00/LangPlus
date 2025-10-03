@@ -9,9 +9,6 @@
 
 # Vendor directory for dependencies
 dependencies/*
-!dependencies/omp-stdlib
-!dependencies/PawnPlus
-!dependencies/strlib
 components/
 
 # Dependency versions lockfile
