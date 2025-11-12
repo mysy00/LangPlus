@@ -89,26 +89,55 @@ static Map:s_LanguageMap[Language:MAX_LANGUAGES],
 
 static Language:s_PlayerLanguage[MAX_PLAYERS];
 
-public OnGameModeInit() {
+static CallbackHandler:OnPlayerConnectHandler = INVALID_CALLBACK_HANDLER;
+
+forward _pp@on_init@LangPlus();
+public _pp@on_init@LangPlus() {
     s_LanguagePool = pool_new(MAX_LANGUAGES);
     s_LanguageNames = map_new();
     s_LanguagePoolInitialized = true;
 
-    #if defined LangPlus_OnGameModeInit
-    return LangPlus_OnGameModeInit();
-    #else
-    return 1;
-    #endif
+    OnPlayerConnectHandler = pawn_register_callback("OnPlayerConnect", "LangPlus_OnPlayerConnect");
 }
 
-public OnPlayerConnect(playerid) {
-    s_PlayerLanguage[playerid] = Language:0;
+forward _pp@on_exit@PawnPlus();
+public _pp@on_exit@PawnPlus() {
+    if (!s_LanguagePoolInitialized) {
+        return;
+    }
 
-    #if defined LangPlus_OnPlayerConnect
-    return LangPlus_OnPlayerConnect(playerid);
-    #else
+    pawn_unregister_callback(OnPlayerConnectHandler);
+    OnPlayerConnectHandler = INVALID_CALLBACK_HANDLER;
+
+    // Delete all language maps
+    for (new Language:i = Language:0; i < Language:MAX_LANGUAGES; i++) {
+        if (map_valid(s_LanguageMap[i])) {
+            map_delete(s_LanguageMap[i]);
+        }
+    }
+
+    // Delete language names map
+    if (map_valid(s_LanguageNames)) {
+        map_delete(s_LanguageNames);
+    }
+
+    // Delete string replacements map
+    if (map_valid(s_StringReplacements)) {
+        map_delete(s_StringReplacements);
+    }
+
+    // Delete language pool
+    if (pool_valid(s_LanguagePool)) {
+        pool_delete(s_LanguagePool);
+    }
+
+    s_LanguagePoolInitialized = false;
+}
+
+forward LangPlus_OnPlayerConnect(playerid);
+public LangPlus_OnPlayerConnect(playerid) {
+    s_PlayerLanguage[playerid] = Language:0;
     return 1;
-    #endif
 }
 
 static Language:_InitLanguage(const string:code[], const string:name[]) {
@@ -658,25 +687,3 @@ stock bool:SendLanguageMessageToAll(colour, const string:key[], {Float, _}:...) 
     }
     return anySuccess;
 }
-
-// ALS
-
-#if defined _ALS_OnGameModeInit
-    #undef OnGameModeInit
-#else
-    #define _ALS_OnGameModeInit
-#endif
-#define OnGameModeInit LangPlus_OnGameModeInit
-#if defined LangPlus_OnGameModeInit
-forward LangPlus_OnGameModeInit();
-#endif
-
-#if defined _ALS_OnPlayerConnect
-    #undef OnPlayerConnect
-#else
-    #define _ALS_OnPlayerConnect
-#endif
-#define OnPlayerConnect LangPlus_OnPlayerConnect
-#if defined LangPlus_OnPlayerConnect
-forward LangPlus_OnPlayerConnect(playerid);
-#endif
